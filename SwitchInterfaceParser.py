@@ -9,7 +9,7 @@ Multiple switch configurations can be read using the glob module, see main funct
 Set the directory where the configurations reside at your needs in the main function
 of the script.
 
-Input en output of script uploaded as well.
+Input and output example of script uploaded are uploaded too.
 """
 
 
