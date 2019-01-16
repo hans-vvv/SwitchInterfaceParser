@@ -310,19 +310,15 @@ def info_to_xls(switchinfo):
 
 def main():
     
-    #os.chdir('C:/Users/Hans Verkerk/Desktop/GIT/SwitchInterfaceParser')
-    cwd = os.getcwd()
-    print(cwd)
-
+    #os.chdir('C:/Users/Hans/Desktop/GIT/SwitchInterfaceParser')
+    
     ciscofiles = []
     for file in glob.glob('*.txt'):
         ciscofiles.append(file)
-    print(ciscofiles)
-    
+        
     # Retrieve interface and vlan info from configuration file and store in switchinfo object.
     switchinfo = get_Switch_info(ciscofiles)
-    print(switchinfo)
-    
+        
     # Print Switchinfo object in excel file.
     info_to_xls(switchinfo)
 
