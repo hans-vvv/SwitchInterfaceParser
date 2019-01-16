@@ -80,13 +80,13 @@ def get_key(item, key_length):
 def get_Switch_info(ciscofiles):
 
     """
-    Loads interface and Vlan specific parts of switch configuration
-    into python object.
+    Funtion store interface and Vlan specific parts of switch configuration
+    in (nested) dictionary
 
     The following logic is used to determine which part of
     interface item is considered a key and which part a value. A
     set of all found keys will be printed in the first row of each
-    tab in the excel sheet. 
+    tab in the excel sheet, see next funtion.
 
     1. First portkey_exceptions list is read. If an interface item
        contains the words found in the list then key = item in the list
