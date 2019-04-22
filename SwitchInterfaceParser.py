@@ -18,6 +18,7 @@ import os
 
 
 def xlref(row, column, zero_indexed=True):
+    
     """
     openpyxl helper
     """
@@ -194,9 +195,9 @@ def get_Switch_info(ciscofiles):
     # Start main part of function
     switchinfo = defaultdict(dict) # Dict containing all info
         
-    for ciscoconfig in ciscofiles:
+    for configfile in configfiles:
         
-       with open(ciscoconfig, 'r') as lines:
+       with open(configfile, 'r') as lines:
 
             portinfo = defaultdict(dict)
             vlaninfo = defaultdict(dict)
@@ -251,7 +252,6 @@ def get_Switch_info(ciscofiles):
                 elif re.search('^hostname (.*)', line):
                     match = re.search('^hostname (.*)', line)
                     hostname = format(match.group(1))
-
                
                 elif re.search('^ip forward-protocol nd', line):
                     scanfile = False
@@ -346,11 +346,11 @@ if __name__ == "__main__":
     
     #os.chdir('C:/Users/Hans/Desktop/GIT/SwitchInterfaceParser')
     
-    ciscofiles = [file for file in glob.glob('*.txt')]
+    configfiles = [file for file in glob.glob('*.txt')]
         
     # Retrieve interface and vlan info from configuration file
     # and store in switchinfo object.
-    switchinfo = get_Switch_info(ciscofiles)
+    switchinfo = get_Switch_info(configfiles)
         
     # Print Switchinfo object in excel file.
     info_to_xls(switchinfo)
