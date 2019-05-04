@@ -1,5 +1,4 @@
 """ SwitchInterfaceParser script
-
 This script reads interface and vlan configuration parts of Cisco IOS
 multilayer switches and prints all items in an excel sheet.
 Using excel features like autofilter you can analyse the (vlan)interface
@@ -11,14 +10,31 @@ main function of the script.
 
 import re
 from collections import defaultdict
+import glob
 from openpyxl.utils import get_column_letter
 from openpyxl import Workbook
-import glob
-import os
+
+
+
+class ReSearcher:
+
+    """
+    Helper class to enable evaluation
+    and regex formatting in a single line
+    """
+
+    match = None
+
+    def __call__(self, pattern, string):
+        self.match = re.search(pattern, string)
+        return self.match
+
+    def __getattr__(self, name):
+        return getattr(self.match, name)
 
 
 def xlref(row, column, zero_indexed=True):
-    
+
     """
     openpyxl helper
     """
@@ -29,45 +45,46 @@ def xlref(row, column, zero_indexed=True):
 
 
 def splitrange(raw_range):
-    
+
     """
     ex. splitrange('105-107') will return ['105','106','107']
     """
 
     result = []
-    
-    if  re.search('^(\d+)\-(\d+)$', raw_range):
-        match = re.search('^(\d+)\-(\d+)$', raw_range)
+
+    if  re.search(r'^(\d+)\-(\d+)$', raw_range):
+        match = re.search(r'^(\d+)\-(\d+)$', raw_range)
         first = int(format(match.group(1)))
         last = int(format(match.group(2)))
         for i in range(first, last+1):
             result.append(str(i))
         return result
 
-    
+
 def get_value(key, item):
-    
+
     """
     key + value = item
     function return value for given key and item
     """
-    
+
     if key.strip() == item.strip():
         return key
     else:
         item = item.lstrip()
         result = re.search('^('+key+')(.*)', item)
-        return format(result.group(2)).lstrip()
+        value = format(result.group(2)).lstrip()
+        return value
 
 
 def get_key(item, key_length):
-    
+
     """
     key + value = item
     number of words of key = key_length
     function returns key
     """
-    
+
     word = item.strip().split()
     if key_length == 0: # fix
         return item
@@ -77,17 +94,15 @@ def get_key(item, key_length):
         return ' '.join(word[0:key_length])
 
 
-def get_Switch_info(ciscofiles):
+def get_switch_info(configfiles):
 
     """
     This function stores interface and Vlan specific parts of switch
     configurations in a (nested) dictionary.
-
     For the following keys, lists are used to store values:
     - switchport trunk allowed vlan (add)
     - standby (HSRP)
     - ip helper-address
-
     Known Caveats:
     - No support for secundairy ip addresses
     - Only Vlan name is read under VLAN configuration
@@ -97,13 +112,13 @@ def get_Switch_info(ciscofiles):
 
     # Helper function
     def store_intf_items(line, portinfo, vlan, intf):
-        
+
         """
         This helper function stores interface items.
         The following methods are used in the given order to determine
         which part of an interface item is considered to be a key and which
-        part a value. 
-    
+        part a value.
+
         1. First portkey_exceptions list is examined. If an interface item
            contains the words found in this list then key = item in the list
            and value = remaining words of the interface item. If an interface
@@ -116,15 +131,14 @@ def get_Switch_info(ciscofiles):
            key = "channel-group"  and value = "2 mode active". If an interface
            item is found then the last method is not considered.
         3. Default method. Last word of line = value
-           and all preceding words = key.           
+           and all preceding words = key.
         """
 
         portkey_exceptions = ['ip vrf forwarding']
-        
-        portkeys = { 1: ['hold-queue', 'standby', 'channel-group', 'description'],
-                     2: ['switchport port-security', 'ip', 'spanning-tree',
-                         'speed auto', 'srr-queue bandwidth']
-        }
+
+        portkeys = {1: ['hold-queue', 'standby', 'channel-group', 'description'],
+                    2: ['switchport port-security', 'ip', 'spanning-tree',
+                        'speed auto', 'srr-queue bandwidth']}
 
         line = line.lstrip()
         found_item = False
@@ -179,8 +193,8 @@ def get_Switch_info(ciscofiles):
             if 'switchport trunk allowed vlan' in line:
                 for raw_vlans in get_value(key, line).split(','):
                     if '-' in raw_vlans:
-                        for vlan in splitrange(raw_vlans):
-                            vlan_allow_list.append(vlan)
+                        for vlan_id in splitrange(raw_vlans):
+                            vlan_allow_list.append(vlan_id)
                     else:
                         vlan_allow_list.append(raw_vlans)
                 portinfo[intf]['vlan_allow_list'] = ','.join(vlan_allow_list)
@@ -190,58 +204,56 @@ def get_Switch_info(ciscofiles):
                 portinfo[intf][key] = get_value(key, line)
 
         return portinfo
-    
+
 
     # Start main part of function
     switchinfo = defaultdict(dict) # Dict containing all info
-        
+
     for configfile in configfiles:
-        
-       with open(configfile, 'r') as lines:
+
+        with open(configfile, 'r') as lines:
 
             portinfo = defaultdict(dict)
             vlaninfo = defaultdict(dict)
             scanfile = False
+
+            match = ReSearcher()
+
             for line in lines:
-                
+
                 line = line.rstrip()
                 word = line.split()
 
-                if re.search('^interface Vlan(\d+)', line):
-                    match = re.search('^interface Vlan(\d+)', line)
+
+                if match(r'^interface Vlan(\d+)', line):
                     intf = format(match.group(0))
                     vlan = format(match.group(1))
                     vlaninfo[vlan]['vlan_id'] = vlan
                     scanfile = True
                     standby = []
                     ip_helper = []
-                    
-                elif re.search('^vlan (\d+)\-(\d+)$', line):
-                    match = re.search('^vlan (\d+)\-(\d+)$', line)
+
+                elif match(r'^vlan (\d+)\-(\d+)$', line):
                     start_vlan = int(match.group(1))
                     stop_vlan = int(match.group(2))
                     for vlan in range(start_vlan, stop_vlan+1):
                         vlaninfo[str(vlan)]['vlan_id'] = str(vlan)
 
-                elif re.search('^vlan (\d+)$', line):
-                    match = re.search('^vlan (\d+)$', line)
+                elif match(r'^vlan (\d+)$', line):
                     vlan = format(match.group(1))
                     vlaninfo[vlan]['vlan_id'] = vlan
 
-                elif re.search('^interface (.*)' , line):
-                    match = re.search('^interface (.*)' , line)
+                elif match(r'^interface (.*)', line):
                     intf = format(match.group(1))
                     scanfile = True
                     vlan_allow_list = []
                     standby = []
                     ip_helper = []
 
-                elif re.search('^ name (.*)', line):
-                    match = re.search('^ name (.*)', line)
+                elif match(r'^ name (.*)', line):
                     vlaninfo[vlan]['name'] = format(match.group(1))
 
-                elif re.search('^ no (.*)', line) and scanfile:
-                    match = re.search('^ no (.*)', line)
+                elif match(r'^ no (.*)', line) and scanfile:
                     key = format(match.group(1))
                     value = format(match.group(0))
                     if 'Vlan' in intf:
@@ -249,21 +261,20 @@ def get_Switch_info(ciscofiles):
                     else:
                         portinfo[intf][key] = value
 
-                elif re.search('^hostname (.*)', line):
-                    match = re.search('^hostname (.*)', line)
+                elif match(r'^hostname (.*)', line):
                     hostname = format(match.group(1))
-               
-                elif re.search('^ip forward-protocol nd', line):
+
+                elif match(r'^ip forward-protocol nd', line):
                     scanfile = False
 
-                elif re.search('^(ip classless|ip default-gateway)', line):
+                elif match(r'^(ip classless|ip default-gateway)', line):
                     scanfile = False
 
                 # interface items are stored with helper function
-                elif re.search('^ .*', line) and scanfile:
+                elif match('^ .*', line) and scanfile:
                     store_intf_items(line, portinfo, vlan, intf)
-                                        
-        
+
+
             switchinfo[hostname]['portinfo'] = portinfo
             switchinfo[hostname]['vlaninfo'] = vlaninfo
 
@@ -298,19 +309,19 @@ def info_to_xls(switchinfo):
     portkeys.remove('description')
     vlankeys.insert(0, 'name')
     portkeys.insert(0, 'description')
-   
+
     wb = Workbook()
     ws = wb.create_sheet("Vlaninfo", 0)
     ws = wb.create_sheet("Portinfo", 0)
-    
+
     ws = wb['Vlaninfo']
 
     count_vlan_row = 0
     ws[xlref(0, 0)] = 'hostname'
     ws[xlref(0, 1)] = 'vlan_id'
     for count, vlanitem in enumerate(vlankeys):
-            ws[xlref(0, count+2)] = vlanitem
-             
+        ws[xlref(0, count+2)] = vlanitem
+
     for hostname in switchinfo:
         for vlan, vlanitems in switchinfo[hostname]['vlaninfo'].items():
             ws[xlref(count_vlan_row+1, 0)] = hostname
@@ -319,7 +330,7 @@ def info_to_xls(switchinfo):
             for count_col, vlanitem in enumerate(vlankeys):
                 vlankey = vlanitems.get(vlankeys[count_col], '')
                 ws[xlref(count_vlan_row+1, count_col+2)] = vlankey
-            count_vlan_row +=1
+            count_vlan_row += 1
 
     ws = wb['Portinfo']
 
@@ -327,7 +338,7 @@ def info_to_xls(switchinfo):
     ws[xlref(0, 0)] = 'hostname'
     ws[xlref(0, 1)] = 'interface'
     for count, portitem in enumerate(portkeys):
-            ws[xlref(0, count+2)] = portitem
+        ws[xlref(0, count+2)] = portitem
 
     for hostname in switchinfo.keys():
         for intf, intf_items in switchinfo[hostname]['portinfo'].items():
@@ -337,20 +348,20 @@ def info_to_xls(switchinfo):
             for count_col, portitem in enumerate(portkeys):
                 portkey = intf_items.get(portkeys[count_col], '')
                 ws[xlref(count_port_row+1, count_col+2)] = portkey
-            count_port_row +=1
-        
+            count_port_row += 1
+
     wb.save('result.xlsx')
 
 
 if __name__ == "__main__":
-    
+
     #os.chdir('C:/Users/Hans/Desktop/GIT/SwitchInterfaceParser')
-    
+
     configfiles = [file for file in glob.glob('*.txt')]
-        
+
     # Retrieve interface and vlan info from configuration file
     # and store in switchinfo object.
-    switchinfo = get_Switch_info(configfiles)
-        
+    switchinfo = get_switch_info(configfiles)
+
     # Print Switchinfo object in excel file.
     info_to_xls(switchinfo)
