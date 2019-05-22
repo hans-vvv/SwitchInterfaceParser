@@ -214,14 +214,14 @@ def get_switch_info(configfiles):
             portinfo = defaultdict(dict)
             vlaninfo = defaultdict(dict)
             scanfile = False
-
+            vlanindex = ''
+            portindex = ''
             match = ReSearcher()
 
             for line in lines:
 
                 line = line.rstrip()
                 word = line.split()
-
 
                 if match(r'^interface (Vlan(\d+))', line):
                     scanfile = True
@@ -239,17 +239,21 @@ def get_switch_info(configfiles):
                     standby = []
                     ip_helper = []
 
-                elif match(r'^vlan (\d+)\-(\d+)$', line):
-                    scanfile = True
-                    start_vlan = int(match.group(1))
-                    stop_vlan = int(match.group(2))
-                    for vlan in range(start_vlan, stop_vlan+1):
-                        vlaninfo[str(vlan)]['vlanindex'] = str(vlan)
-
                 elif match(r'^vlan (\d+)$', line):
                     scanfile = True
                     vlanindex = format(match.group(1))
                     vlaninfo[vlanindex]['vlanindex'] = vlanindex
+
+                elif match(r'^vlan ([0-9,-]+)', line):
+                    scanfile = True
+                    value = format(match.group(1))
+                    for raw_vlans in value.split(','):
+                        if '-' in raw_vlans:
+                            for vlan in splitrange(raw_vlans):
+                                vlaninfo[str(vlan)]['vlanindex'] = str(vlan)
+                        else:
+                            vlaninfo[raw_vlans]['vlanindex'] = str(raw_vlans)
+                           
 
                 elif match(r'^ name (.*)', line) and scanfile:
                     vlaninfo[vlanindex]['name'] = format(match.group(1))
@@ -267,7 +271,7 @@ def get_switch_info(configfiles):
 
                 elif match(r'!$', line) and scanfile:
                     scanfile = False
-
+                    
                 # interface items are stored with helper function
                 elif match('^ .*', line) and scanfile:
                     store_port_items(line, vlanindex, portindex)
@@ -286,26 +290,28 @@ def info_to_xls(switchinfo):
     are port info are printed in seperated tabs.
     """
 
-    # Calculate list of keys.
-    vlankeys = []
-    portkeys = []
+    # Calculate set of keys.
+    vlankeys = set()
+    portkeys = set()
 
     for hostname in switchinfo:
         for vlan, vlanitems in switchinfo[hostname]['vlaninfo'].items():
-            for key in vlanitems.keys():
-                vlankeys.append(key)
-
+            vlankeys.update(vlanitems.keys())
+               
     for hostname in switchinfo:
         for port, portitems in switchinfo[hostname]['portinfo'].items():
-            for key in portitems.keys():
-                portkeys.append(key)
-
+            portkeys.update(portitems.keys())
+                
     vlankeys = sorted(set(vlankeys))
     portkeys = sorted(set(portkeys))
-    vlankeys.remove('vlanindex')
-    vlankeys.remove('name')
-    portkeys.remove('description')
-    portkeys.remove('portindex')
+    if 'vlanindex' in vlankeys:
+        vlankeys.remove('vlanindex')
+    if 'name' in vlankeys:
+        vlankeys.remove('name')
+    if 'description'in portkeys:
+        portkeys.remove('description')
+    if 'portindex'in portkeys:
+        portkeys.remove('portindex')
     vlankeys.insert(0, 'name')
     portkeys.insert(0, 'description')
 
