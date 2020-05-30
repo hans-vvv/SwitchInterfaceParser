@@ -262,7 +262,7 @@ def get_switch_info(configfiles):
                     else:
                         switch['vlan'][raw_vlans]['vlanindex'] = str(raw_vlans)
                        
-            if context == 'port':
+            elif context == 'port':
 
                 if match(r'^ no (.*)', line):
                     key = format(match.group(1))
@@ -279,7 +279,7 @@ def get_switch_info(configfiles):
                 elif match(r'!$', line):
                     context = ''
 
-            if context == 'vlan':
+            elif context == 'vlan':
 
                 if match(r'^ name (.*)', line):
                     switch['vlan'][vlanindex]['name'] = format(match.group(1))
