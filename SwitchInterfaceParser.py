@@ -60,8 +60,8 @@ def splitrange(raw_range):
 
     m = re.search(r'^(\d+)\-(\d+)$', raw_range)
     if m:
-        first = int(format(match.group(1)))
-        last = int(format(match.group(2)))
+        first = int(format(m.group(1)))
+        last = int(format(m.group(2)))
         return [str(i) for i in range(first, last+1)]
 
 
@@ -151,10 +151,10 @@ def get_switch_info(configfiles):
         for key in portkey_exceptions:
             if key in line:
                 if 'Vlan' in portindex:
-                    vlaninfo[vlanindex][key] = get_value(key, line)
+                    switch['vlan'][vlanindex][key] = get_value(key, line)
                     found_item = True
                 else:
-                    portinfo[portindex][key] = get_value(key, line)
+                    switch['port'][portindex][key] = get_value(key, line)
                     found_item = True
 
         # 'Method 2'
@@ -202,7 +202,7 @@ def get_switch_info(configfiles):
                             vlan_allow_list.append(vlan_id)
                     else:
                         vlan_allow_list.append(raw_vlans)
-                        allow_lst = ','.join(vlan_allow_list)
+                allow_lst = ','.join(vlan_allow_list)
                 switch['port'][portindex]['vlan_allow_list'] = allow_lst
             elif 'Vlan' in portindex:
                 switch['vlan'][vlanindex][key] = get_value(key, line)
