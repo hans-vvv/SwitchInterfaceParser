@@ -11,8 +11,8 @@ main function of the script.
 import re
 import json
 import glob
-from openpyxl.utils import get_column_letter
 from openpyxl import Workbook
+from openpyxl.utils import get_column_letter
 
 
 class ReSearcher:
@@ -21,7 +21,6 @@ class ReSearcher:
     Helper class to enable evaluation
     and regex formatting in a single line
     """
-
     match = None
 
     def __call__(self, pattern, string):
@@ -70,7 +69,7 @@ def get_value(key, item):
 
     """
     key + value = item
-    function return value for given key and item
+    function returns value for given key and item
     """
 
     if key.strip() == item.strip():
@@ -280,10 +279,10 @@ def get_switch_info(configfiles):
                 elif match(r'!$', line):
                     context = ''
 
-            if context == 'port':
+            if context == 'vlan':
 
-                if match(r'^ name (.*)', line) and scanfile:
-                    vlaninfo[vlanindex]['name'] = format(match.group(1))
+                if match(r'^ name (.*)', line):
+                    switch['vlan'][vlanindex]['name'] = format(match.group(1))
 
                 elif match(r'!$', line):
                     context = ''
