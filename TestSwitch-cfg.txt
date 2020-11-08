@@ -195,7 +195,8 @@ interface Port-channel1
  description TO Switch1
  switchport mode trunk 
  switchport nonegotiate 
- switchport trunk allow vlan 10,11,12
+ switchport trunk allowed vlan 10,11,12
+ switchport trunk allowed vlan add 13,14
  spanning-tree portfast trunk 
 !
 interface Port-channel10 
