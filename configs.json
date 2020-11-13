@@ -3,35 +3,16 @@
         "hostname": "TestSwitch",
         "vlan": {
             "10": {
-                "ip address": "1.2.3.4 255.255.255.0",
-                "standby": [
-                    "1 ip 1.2.3.123",
-                    "1 prio 105",
-                    "1 preempt",
-                    "1 track 1 decrement 5"
-                ],
-                "ip helper-address": [
-                    "3.3.3.3",
-                    "4.4.4.4"
-                ],
-                "ip route-cache": " no ip route-cache",
-                "ip proxy arp": " no ip proxy arp"
+                "name": "Ten"
             },
             "11": {
-                "ip address": "1.2.3.4 255.255.255.0",
-                "ip redirects": " no ip redirects",
-                "ip access-group": "10 in"
+                "name": "Eleven"
             },
             "12": {
                 "name": "Twelfe"
             },
             "13": {
                 "name": "Thirteen"
-            },
-            "1": {
-                "ip address": " no ip address",
-                "ip route-cache": " no ip route-cache",
-                "shutdown": "shutdown"
             }
         },
         "port": {
@@ -163,6 +144,31 @@
                 "switchport": "nonegotiate",
                 "carrier-delay msec": "200",
                 "channel-group": "1 mode active"
+            },
+            "Vlan1": {
+                "ip address": " no ip address",
+                "ip route-cache": " no ip route-cache",
+                "shutdown": "shutdown"
+            },
+            "Vlan10": {
+                "ip address": "1.2.3.4 255.255.255.0",
+                "standby": [
+                    "1 ip 1.2.3.123",
+                    "1 prio 105",
+                    "1 preempt",
+                    "1 track 1 decrement 5"
+                ],
+                "ip helper-address": [
+                    "3.3.3.3",
+                    "4.4.4.4"
+                ],
+                "ip route-cache": " no ip route-cache",
+                "ip proxy arp": " no ip proxy arp"
+            },
+            "Vlan11": {
+                "ip address": "1.2.3.4 255.255.255.0",
+                "ip redirects": " no ip redirects",
+                "ip access-group": "10 in"
             }
         }
     }
