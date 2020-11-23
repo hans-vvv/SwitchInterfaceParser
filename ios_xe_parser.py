@@ -143,7 +143,7 @@ def ios_xe_parser(configfile):
                 if match(r'^ name (.*)', line):
                     tree['vlan'][vlan]['name'] = format(match.group(1))
 
-                elif match(r'!$', line):
+                elif line.startswith('!') or not line.startswith(''):
                     context = ''
        
         return tree

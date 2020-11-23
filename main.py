@@ -11,7 +11,7 @@ def main():
     config_files = [configfile for configfile in glob('*-cfg.txt')]
 
     # list of Tree objects
-    #configs = [ios_xe_parser(config_file) for config_file in config_files]
+    # configs = [ios_xe_parser(config_file) for config_file in config_files]
     pool = Pool()
     configs = pool.map(ios_xe_parser, config_files)
      
