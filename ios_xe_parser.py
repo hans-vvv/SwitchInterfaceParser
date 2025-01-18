@@ -1,5 +1,3 @@
-import re
-import json
 from utils import ReSearcher, Tree, splitrange, get_key, get_value
 
 
@@ -104,7 +102,7 @@ def ios_xe_parser(configfile):
               
         for line in lines:
             
-            if not line.strip(): # skip empty lines
+            if not line.strip():  # skip empty lines
                 continue
             
             line = line.rstrip()
@@ -123,6 +121,14 @@ def ios_xe_parser(configfile):
                 context = 'vlan'
                 for vlan in splitrange(format(match.group(1))):
                     tree['vlan'][vlan] = {}
+
+            elif match(r'ip route vrf (\S+) (\S+) (\S+) (\S+)', line):
+                vrf, netw, inv_mask, nh = match.group(1), match.group(2), match.group(3), match.group(4)
+                tree.setdefault('static route', []).append((vrf, netw, inv_mask, nh))
+
+            elif match(r'ip route (\S+) (\S+) (\S+)', line):
+                netw, inv_mask, nh = match.group(1), match.group(2), match.group(3)
+                tree.setdefault('static route', []).append(('global', netw, inv_mask, nh))
                 
             elif context == 'port':
 
@@ -145,5 +151,5 @@ def ios_xe_parser(configfile):
 
                 elif line.startswith('!') or not line.startswith(''):
                     context = ''
-       
+
         return tree

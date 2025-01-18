@@ -344,6 +344,8 @@ ip forward-protocol nd
 no ip http server 
 no ip http secure-server 
 ! 
+ip route 0.0.0.0 0.0.0.0 1.2.3.254
+ip route vrf test 0.0.0.0 0.0.0.0 1.2.3.4
 ! 
 ip access-list standard MGNT 
  permit 6.6.0.0 0.0.255.255 
