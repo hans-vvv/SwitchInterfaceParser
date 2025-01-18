@@ -5,7 +5,6 @@ from xls_writer import xls_writer
 from ios_xe_parser import ios_xe_parser
 
 
-
 def main():
 
     config_files = [configfile for configfile in glob('*-cfg.txt')]
@@ -20,7 +19,6 @@ def main():
 
     xls_writer(configs)
 
+
 if __name__ == '__main__':
     main()   
-
-

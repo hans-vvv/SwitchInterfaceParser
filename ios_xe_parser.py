@@ -1,7 +1,7 @@
 from utils import ReSearcher, Tree, splitrange, get_key, get_value
 
 
-class InterfaceParser():
+class InterfaceParser:
 
     """
     Helper class to parse interface items. Items which are
@@ -29,9 +29,10 @@ class InterfaceParser():
         self.list_items = list_items
         self.key_exceptions = key_exceptions
         self.key_length = key_length
+        self.values = [[] for _ in self.list_items]
 
-    def initialize_lists(self):
-        self.values = [[] for item in self.list_items]
+    # def initialize_lists(self):
+    #     self.values = [[] for _ in self.list_items]
 
     def _get_index(self, line):
         """ Get index by name of lists to store values """
@@ -55,17 +56,17 @@ class InterfaceParser():
         line = line.lstrip()
         key = self._select_key(line)
         for item in self.list_items:
-            if line.startswith(item):
-                index = self._get_index(line)
-                if line.startswith('switchport trunk allowed vlan'):
-                    self.values[index].extend(splitrange(get_value(key, line)))
-                    tree['port'][portindex]['vlan_allow_list'] \
-                                                         = self.values[index]
-                    return tree
-                else:
-                    self.values[index].append(get_value(key, line))
-                    tree['port'][portindex][item] = self.values[index]
-                    return tree
+            if not line.startswith(item):
+                continue
+            index = self._get_index(line)
+            if line.startswith('switchport trunk allowed vlan'):
+                self.values[index].extend(splitrange(get_value(key, line)))
+                tree['port'][portindex]['vlan_allow_list'] = self.values[index]
+                return tree
+            else:
+                self.values[index].append(get_value(key, line))
+                tree['port'][portindex][item] = self.values[index]
+                return tree
         tree['port'][portindex][key] = get_value(key, line)
         return tree
 
@@ -81,6 +82,7 @@ def ios_xe_parser(configfile):
     - Global config items are stored in a list.
     - All hierarchical items are stored in seperate lists.
     - Banners are stored in a list.
+    - Static routes are parsed into a list
     """
 
     with open(configfile, 'r') as lines:
@@ -92,8 +94,7 @@ def ios_xe_parser(configfile):
         key_length = {1: ['hold-queue', 'standby', 'channel-group',
                           'description'],
                       2: ['switchport port-security', 'ip', 'spanning-tree',
-                          'speed auto', 'srr-queue bandwidth']
-        }
+                          'speed auto', 'srr-queue bandwidth']}
         list_items = ['switchport trunk allowed vlan', 'standby',
                       'ip helper-address', 'logging event']
         port_parser = InterfaceParser(list_items, key_exceptions, key_length)
@@ -115,7 +116,7 @@ def ios_xe_parser(configfile):
                 context = 'port'
                 portindex = format(match.group(1))
                 tree['port'][portindex] = {}
-                port_parser.initialize_lists()
+                # port_parser.initialize_lists()
  
             elif match(r'^vlan ([\d,-]+)', line):
                 context = 'vlan'
