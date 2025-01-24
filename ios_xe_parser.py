@@ -29,10 +29,10 @@ class InterfaceParser:
         self.list_items = list_items
         self.key_exceptions = key_exceptions
         self.key_length = key_length
-        self.values = [[] for _ in self.list_items]
+        self.values = None
 
-    # def initialize_lists(self):
-    #     self.values = [[] for _ in self.list_items]
+    def initialize_lists(self):
+        self.values = [[] for _ in self.list_items]
 
     def _get_index(self, line):
         """ Get index by name of lists to store values """
@@ -116,7 +116,7 @@ def ios_xe_parser(configfile):
                 context = 'port'
                 portindex = format(match.group(1))
                 tree['port'][portindex] = {}
-                # port_parser.initialize_lists()
+                port_parser.initialize_lists()
  
             elif match(r'^vlan ([\d,-]+)', line):
                 context = 'vlan'
